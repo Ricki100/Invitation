@@ -1,0 +1,13 @@
+{
+    "name": "event-rsvp-generator/app",
+    "description": "Event RSVP Invitation Generator with Google OAuth and Image Upload",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "mkdir -p uploads data"
+        ]
+    }
+} 
