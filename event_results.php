@@ -1,16 +1,36 @@
 <?php
 session_start();
-if (!isset($_SESSION['event_data'])) {
+
+// Get event ID from URL
+$event_id = $_GET['event_id'] ?? '';
+
+if (empty($event_id)) {
     header('Location: index.php');
     exit;
 }
-$event = $_SESSION['event_data'];
+
+// Load event data from file
+$events_file = 'data/events.json';
+if (!file_exists($events_file)) {
+    header('Location: index.php');
+    exit;
+}
+
+$events = json_decode(file_get_contents($events_file), true) ?? [];
+if (!isset($events[$event_id])) {
+    header('Location: index.php');
+    exit;
+}
+
+$event = $events[$event_id];
 $guests = $event['guests'];
 $event_image = $event['event_image'];
+
 function generateQRCode($url) {
     return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($url);
 }
-// Before the foreach loop, add this to get the base URL
+
+// Get the base URL
 define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/');
 ?>
 <!DOCTYPE html>
@@ -167,7 +187,7 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'ht
                         <!-- Guest Links -->
                         <div class="row">
                             <?php foreach ($guests as $guest):
-                                $guest_url = BASE_URL . 'rsvp.php?guest=' . urlencode($guest);
+                                $guest_url = BASE_URL . 'rsvp.php?event_id=' . urlencode($event_id) . '&guest=' . urlencode($guest);
                                 ?>
                                 <div class="col-md-6 col-lg-4 mb-4">
                                     <div class="guest-card">

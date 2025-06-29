@@ -71,15 +71,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Please provide at least one guest name, either by uploading a file or entering manually.";
         }
         if (!$error) {
-            $_SESSION['event_data'] = [
+            // Generate unique event ID
+            $event_id = uniqid();
+            
+            // Create event data
+            $event_data = [
                 'event_name' => $event_name,
                 'event_date' => $event_date,
                 'event_location' => $event_location,
                 'event_description' => $event_description,
                 'event_image' => $event_image,
-                'guests' => $guests
+                'guests' => $guests,
+                'created_at' => date('Y-m-d H:i:s')
             ];
-            header('Location: event_results.php');
+            
+            // Save event to file
+            $events_file = 'data/events.json';
+            if (!file_exists('data')) mkdir('data', 0755, true);
+            
+            $events = [];
+            if (file_exists($events_file)) {
+                $events = json_decode(file_get_contents($events_file), true) ?? [];
+            }
+            
+            $events[$event_id] = $event_data;
+            file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
+            
+            // Redirect to results page with event ID
+            header('Location: event_results.php?event_id=' . $event_id);
             exit;
         }
     }

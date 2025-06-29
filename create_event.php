@@ -100,7 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
                 
                 // Redirect to results page
-                redirect('event_results.php');
+                header('Location: event_results.php?event_id=' . $event_id);
+                exit;
             }
         }
     }

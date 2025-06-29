@@ -1,9 +1,33 @@
 <?php
 session_start();
+
+// Get parameters from URL
+$event_id = $_GET['event_id'] ?? '';
 $guest_name = $_GET['guest'] ?? '';
-$event = $_SESSION['event_data'] ?? null;
-if (!$event || !$guest_name) {
+
+if (empty($event_id) || empty($guest_name)) {
     echo '<h2>Invalid RSVP link.</h2>';
+    exit;
+}
+
+// Load event data from file
+$events_file = 'data/events.json';
+if (!file_exists($events_file)) {
+    echo '<h2>Event not found.</h2>';
+    exit;
+}
+
+$events = json_decode(file_get_contents($events_file), true) ?? [];
+if (!isset($events[$event_id])) {
+    echo '<h2>Event not found.</h2>';
+    exit;
+}
+
+$event = $events[$event_id];
+
+// Validate guest is in the event's guest list
+if (!in_array($guest_name, $event['guests'])) {
+    echo '<h2>Invalid guest for this event.</h2>';
     exit;
 }
 
@@ -30,7 +54,6 @@ if (!empty($event['form_link'])) {
     exit;
 }
 
-$event_id = md5($event['event_name'] . $event['event_date']);
 $rsvps_file = 'data/rsvps_' . $event_id . '.json';
 if (!file_exists('data')) mkdir('data', 0755, true);
 
