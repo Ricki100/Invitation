@@ -14,8 +14,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $guests_text = $_POST['guests'] ?? '';
     $event_image = '';
 
+    // Handle guest file upload (CSV/Excel)
+    $uploaded_guests = [];
+    if (isset($_FILES['guests_file']) && $_FILES['guests_file']['error'] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES['guests_file']['tmp_name'];
+        $file_ext = strtolower(pathinfo($_FILES['guests_file']['name'], PATHINFO_EXTENSION));
+        if ($file_ext === 'csv') {
+            if (($handle = fopen($file_tmp, 'r')) !== false) {
+                while (($data = fgetcsv($handle)) !== false) {
+                    if (!empty($data[0])) {
+                        $uploaded_guests[] = trim($data[0]);
+                    }
+                }
+                fclose($handle);
+            }
+        } elseif (in_array($file_ext, ['xls', 'xlsx'])) {
+            // Excel support requires PhpSpreadsheet
+            if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+                require_once __DIR__ . '/vendor/autoload.php';
+                $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file_tmp);
+                $sheet = $spreadsheet->getActiveSheet();
+                foreach ($sheet->getRowIterator() as $row) {
+                    $cell = $sheet->getCell('A' . $row->getRowIndex());
+                    $val = trim($cell->getValue());
+                    if (!empty($val)) {
+                        $uploaded_guests[] = $val;
+                    }
+                }
+            }
+        }
+    }
+
     // Validate inputs
-    if (empty($event_name) || empty($event_date) || empty($guests_text)) {
+    if (empty($event_name) || empty($event_date)) {
         $error = "Please fill in all required fields.";
     } else {
         // Handle image upload
@@ -32,10 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Invalid image file. Please upload a JPG, PNG, or GIF (max 8MB).";
             }
         }
-        // Parse guest list
+        // Parse guest list from textarea
         $guests = array_filter(array_map('trim', explode("\n", $guests_text)));
+        // Merge with uploaded guests and remove duplicates
+        $guests = array_unique(array_merge($guests, $uploaded_guests));
         if (empty($guests)) {
-            $error = "Please enter at least one guest name.";
+            $error = "Please provide at least one guest name, either by uploading a file or entering manually.";
         }
         if (!$error) {
             $_SESSION['event_data'] = [
@@ -149,11 +182,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a class="navbar-brand" href="index.php">
                 <i class="fas fa-calendar-check me-2"></i>Event RSVP Generator
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="google_login.php">
-                    <i class="fas fa-sign-in-alt me-1"></i>Sign In
-                </a>
-            </div>
         </div>
     </nav>
 
@@ -229,9 +257,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <textarea class="form-control" name="event_description" rows="2"></textarea>
                                 </div>
                                 <div class="mb-3">
+                                    <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
+                                    <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
+                                    <div class="form-text">
+                                        <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">Guest List *</label>
                                     <textarea class="form-control" name="guests" rows="6" 
-                                              placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson" required></textarea>
+                                              placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson"></textarea>
                                     <div class="form-text">
                                         <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
                                     </div>

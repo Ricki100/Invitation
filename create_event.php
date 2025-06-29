@@ -164,14 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="dashboard.php">
+            <a class="navbar-brand" href="index.php">
                 <i class="fas fa-calendar-check me-2"></i>Event RSVP Generator
             </a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="dashboard.php">
-                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-                </a>
-            </div>
         </div>
     </nav>
 
@@ -236,14 +231,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <label for="event_description" class="form-label">Event Description</label>
                                         <textarea class="form-control" id="event_description" name="event_description" 
                                                   rows="3" placeholder="Tell your guests about the event..."></textarea>
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
-                                        <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
-                                        <div class="form-text">
-                                            <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
-                                        </div>
                                     </div>
                                     
                                     <div class="mb-3">

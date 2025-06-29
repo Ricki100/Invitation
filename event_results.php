@@ -114,12 +114,12 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'ht
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="dashboard.php">
+            <a class="navbar-brand" href="index.php">
                 <i class="fas fa-calendar-check me-2"></i>Event RSVP Generator
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="dashboard.php">
-                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                <a class="nav-link" href="index.php">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Home
                 </a>
             </div>
         </div>

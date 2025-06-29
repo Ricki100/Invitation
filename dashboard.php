@@ -65,7 +65,7 @@ if (file_exists($events_file)) {
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="dashboard.php">
+            <a class="navbar-brand" href="index.php">
                 <i class="fas fa-calendar-check me-2"></i>Event RSVP Generator
             </a>
         </div>
