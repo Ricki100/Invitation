@@ -46,20 +46,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
     
-    // Send to Google Sheets via Apps Script Web App
-    $webapp_url = 'https://script.google.com/macros/s/AKfycbwa9rLHyU23aO8OUy5S1-LNRz-TYGc0942v2wVUqJBd1NlHzz0afPD2VYcF8bXCryMIuQ/exec';
+    // Send to Google Sheets via Apps Script Web App (without cURL)
+    $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
     $post_data = [
         'name' => $guest_name,
         'rsvp' => $response,
         'phone' => $phone_number
     ];
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $webapp_url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_exec($ch);
-    curl_close($ch);
+    $options = [
+        'http' => [
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
+            'content' => http_build_query($post_data),
+            'timeout' => 10
+        ]
+    ];
+    $context  = stream_context_create($options);
+    $result = file_get_contents($webapp_url, false, $context);
+    // Optionally, you can check $result for 'Success'
     
     $submitted = true;
 }

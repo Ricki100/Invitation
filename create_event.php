@@ -245,6 +245,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
                                         </div>
                                     </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="guests" class="form-label">Guest List *</label>
+                                        <textarea class="form-control" id="guests" name="guests" rows="8" 
+                                                  placeholder="Enter guest names (one per line):\nJohn Smith\nJane Doe\nMike Johnson" required></textarea>
+                                        <div class="form-text">
+                                            <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-4">
