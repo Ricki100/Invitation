@@ -10,6 +10,8 @@ $event_image = $event['event_image'];
 function generateQRCode($url) {
     return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($url);
 }
+// Before the foreach loop, add this to get the base URL
+define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -165,7 +167,7 @@ function generateQRCode($url) {
                         <!-- Guest Links -->
                         <div class="row">
                             <?php foreach ($guests as $guest):
-                                $guest_url = 'rsvp.php?guest=' . urlencode($guest);
+                                $guest_url = BASE_URL . 'rsvp.php?guest=' . urlencode($guest);
                                 ?>
                                 <div class="col-md-6 col-lg-4 mb-4">
                                     <div class="guest-card">

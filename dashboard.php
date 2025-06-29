@@ -1,18 +1,8 @@
 <?php
-require_once 'config.php';
+// require_once 'config.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
-    redirect('google_login.php');
-}
-
-$user_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'];
-$user_email = $_SESSION['user_email'];
-$user_picture = $_SESSION['user_picture'];
-
-// Load user's events
-$events_file = "data/events_{$user_id}.json";
+// Load all events from generic file
+$events_file = "data/events.json";
 $events = [];
 if (file_exists($events_file)) {
     $events = json_decode(file_get_contents($events_file), true) ?? [];
@@ -78,17 +68,6 @@ if (file_exists($events_file)) {
             <a class="navbar-brand" href="dashboard.php">
                 <i class="fas fa-calendar-check me-2"></i>Event RSVP Generator
             </a>
-            <div class="navbar-nav ms-auto">
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                        <img src="<?php echo htmlspecialchars($user_picture); ?>" alt="Profile" class="user-avatar me-2">
-                        <?php echo htmlspecialchars($user_name); ?>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="logout.php">Sign Out</a></li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </nav>
 
@@ -98,13 +77,8 @@ if (file_exists($events_file)) {
             <div class="col-12">
                 <div class="card">
                     <div class="card-body p-4">
-                        <div class="d-flex align-items-center">
-                            <img src="<?php echo htmlspecialchars($user_picture); ?>" alt="Profile" class="user-avatar me-3">
-                            <div>
-                                <h2 class="mb-1">Welcome back, <?php echo htmlspecialchars($user_name); ?>!</h2>
-                                <p class="text-muted mb-0">Manage your events and RSVP invitations</p>
-                            </div>
-                        </div>
+                        <h2 class="mb-1">Welcome!</h2>
+                        <p class="text-muted mb-0">Manage your events and RSVP invitations</p>
                     </div>
                 </div>
             </div>

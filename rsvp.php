@@ -37,6 +37,7 @@ if (!file_exists('data')) mkdir('data', 0755, true);
 $submitted = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $response = $_POST['rsvp_response'] ?? '';
+    $phone_number = $_POST['phone_number'] ?? '';
     $timestamp = date('Y-m-d H:i:s');
     $rsvps = file_exists($rsvps_file) ? json_decode(file_get_contents($rsvps_file), true) : [];
     $rsvps[$guest_name] = [
@@ -44,6 +45,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'timestamp' => $timestamp
     ];
     file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
+    
+    // Send to Google Sheets via Apps Script Web App
+    $webapp_url = 'https://script.google.com/macros/s/AKfycbwa9rLHyU23aO8OUy5S1-LNRz-TYGc0942v2wVUqJBd1NlHzz0afPD2VYcF8bXCryMIuQ/exec';
+    $post_data = [
+        'name' => $guest_name,
+        'rsvp' => $response,
+        'phone' => $phone_number
+    ];
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $webapp_url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_exec($ch);
+    curl_close($ch);
+    
     $submitted = true;
 }
 

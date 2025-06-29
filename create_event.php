@@ -1,12 +1,6 @@
 <?php
-require_once 'config.php';
+// require_once 'config.php';
 
-// Check if user is logged in
-if (!isLoggedIn()) {
-    redirect('google_login.php');
-}
-
-$user_id = $_SESSION['user_id'];
 $error = '';
 $success = '';
 
@@ -20,12 +14,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $guests_text = $_POST['guests'] ?? '';
     $event_description = $_POST['event_description'] ?? '';
     
+    // Handle guest file upload (CSV/Excel)
+    $uploaded_guests = [];
+    if (isset($_FILES['guests_file']) && $_FILES['guests_file']['error'] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES['guests_file']['tmp_name'];
+        $file_ext = strtolower(pathinfo($_FILES['guests_file']['name'], PATHINFO_EXTENSION));
+        if ($file_ext === 'csv') {
+            if (($handle = fopen($file_tmp, 'r')) !== false) {
+                while (($data = fgetcsv($handle)) !== false) {
+                    if (!empty($data[0])) {
+                        $uploaded_guests[] = trim($data[0]);
+                    }
+                }
+                fclose($handle);
+            }
+        } elseif (in_array($file_ext, ['xls', 'xlsx'])) {
+            // Excel support requires PhpSpreadsheet
+            require_once __DIR__ . '/vendor/autoload.php';
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file_tmp);
+            $sheet = $spreadsheet->getActiveSheet();
+            foreach ($sheet->getRowIterator() as $row) {
+                $cell = $sheet->getCell('A' . $row->getRowIndex());
+                $val = trim($cell->getValue());
+                if (!empty($val)) {
+                    $uploaded_guests[] = $val;
+                }
+            }
+        }
+    }
+    
     // Validate inputs
     if (empty($sheet_link) || empty($event_name) || empty($event_date) || empty($guests_text)) {
         $error = "All required fields must be filled.";
     } else {
         // Parse guest list
         $guests = array_filter(array_map('trim', explode("\n", $guests_text)));
+        // Merge with uploaded guests and remove duplicates
+        $guests = array_unique(array_merge($guests, $uploaded_guests));
         
         if (empty($guests)) {
             $error = "Please enter at least one guest name.";
@@ -61,12 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'sheet_link' => $sheet_link,
                     'form_link' => $form_link,
                     'guests' => $guests,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'created_by' => $user_id
+                    'created_at' => date('Y-m-d H:i:s')
                 ];
                 
-                // Save event to user's events file
-                $events_file = "data/events_{$user_id}.json";
+                // Save event to generic events file
+                $events_file = "data/events.json";
                 $events = [];
                 if (file_exists($events_file)) {
                     $events = json_decode(file_get_contents($events_file), true) ?? [];
@@ -74,9 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $events[$event_id] = $event_data;
                 file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
-                
-                // Store event data in session for the results page
-                $_SESSION['event_data'] = $event_data;
                 
                 // Redirect to results page
                 redirect('event_results.php');
@@ -218,11 +239,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label for="guests" class="form-label">Guest List *</label>
-                                        <textarea class="form-control" id="guests" name="guests" rows="8" 
-                                                  placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson" required></textarea>
+                                        <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
+                                        <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
                                         <div class="form-text">
-                                            <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
+                                            <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
                                         </div>
                                     </div>
                                 </div>
