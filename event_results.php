@@ -184,6 +184,19 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'ht
                             <p class="mb-0">Each guest has a unique RSVP link and QR code</p>
                         </div>
 
+                        <!-- Action Buttons -->
+                        <div class="text-center mb-5">
+                            <a href="download_csv.php?event_id=<?php echo urlencode($event_id); ?>" class="btn btn-primary btn-lg me-3">
+                                <i class="fas fa-download me-2"></i>Download CSV
+                            </a>
+                            <a href="download_qr_zip.php?event_id=<?php echo urlencode($event_id); ?>" class="btn btn-info btn-lg me-3">
+                                <i class="fas fa-qrcode me-2"></i>Download QR Codes (ZIP)
+                            </a>
+                            <a href="index.php" class="btn btn-success btn-lg">
+                                <i class="fas fa-plus me-2"></i>Create Another Event
+                            </a>
+                        </div>
+
                         <!-- Guest Links -->
                         <div class="row">
                             <?php foreach ($guests as $guest):
@@ -218,16 +231,6 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'ht
                                     </div>
                                 </div>
                             <?php endforeach; ?>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="text-center mt-5">
-                            <a href="dashboard.php" class="btn btn-primary btn-lg me-3">
-                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                            </a>
-                            <a href="create_event.php" class="btn btn-success btn-lg">
-                                <i class="fas fa-plus me-2"></i>Create Another Event
-                            </a>
                         </div>
                     </div>
                 </div>

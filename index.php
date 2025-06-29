@@ -125,6 +125,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 40px;
             text-align: center;
             color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
         }
         .card {
             border: none;
@@ -192,6 +197,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 40px;
             margin-bottom: 30px;
         }
+        .row.justify-content-center {
+            justify-content: center !important;
+            display: flex;
+        }
+        .col-md-8 {
+            /* Remove flexbox so Bootstrap grid works as intended */
+        }
+        .row > .col-md-6 {
+            float: none;
+            margin: 0 auto;
+            max-width: 420px;
+            min-width: 320px;
+        }
+        .card.h-100 {
+            max-width: 420px;
+            min-width: 320px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -224,144 +247,132 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body text-center p-4">
-                                    <i class="fas fa-user feature-icon"></i>
-                                    <h5>Full Account</h5>
-                                    <p class="text-muted">Sign in with Google to manage multiple events</p>
-                                    <a href="google_login.php" class="btn btn-success">
-                                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Removed Full Account/Sign In card -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Start Form (Hidden by default) -->
-        <div id="quickStartForm" style="display: none;">
-            <div class="card">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <h2>Create Your Event</h2>
-                        <p class="text-muted">Fill in the details below to generate RSVP invitations</p>
+    <!-- Quick Start Form (Hidden by default) -->
+    <div id="quickStartForm" style="display: none;">
+        <div class="card">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2>Create Your Event</h2>
+                    <p class="text-muted">Fill in the details below to generate RSVP invitations</p>
+                </div>
+                
+                <?php if ($error): ?>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error); ?>
                     </div>
-                    
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error); ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <form method="POST" enctype="multipart/form-data">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label class="form-label">Event Name *</label>
-                                    <input type="text" class="form-control" name="event_name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Event Date *</label>
-                                    <input type="date" class="form-control" name="event_date" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Event Location</label>
-                                    <input type="text" class="form-control" name="event_location">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Event Description</label>
-                                    <textarea class="form-control" name="event_description" rows="2"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
-                                    <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
-                                    <div class="form-text">
-                                        <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Guest List *</label>
-                                    <textarea class="form-control" name="guests" rows="6" 
-                                              placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson"></textarea>
-                                    <div class="form-text">
-                                        <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
-                                    </div>
+                <?php endif; ?>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Event Name *</label>
+                                <input type="text" class="form-control" name="event_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Date *</label>
+                                <input type="date" class="form-control" name="event_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Location</label>
+                                <input type="text" class="form-control" name="event_location">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Description</label>
+                                <textarea class="form-control" name="event_description" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
+                                <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
+                                <div class="form-text">
+                                    <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
                                 </div>
                             </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Event Image (Optional)</label>
-                                    <div class="upload-area" id="uploadArea">
-                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
-                                        <h6>Drop image here</h6>
-                                        <p class="text-muted small">or click to browse</p>
-                                        <input type="file" name="event_image" id="eventImage" class="d-none" 
-                                               accept=".jpg,.jpeg,.png,.gif">
-                                    </div>
-                                    <div class="mt-2">
-                                        <small class="text-muted">
-                                            JPG, PNG, GIF (max 8MB)
-                                        </small>
-                                    </div>
-                                </div>
-                                
-                                <div class="card bg-light">
-                                    <div class="card-body">
-                                        <h6 class="card-title">
-                                            <i class="fas fa-info-circle text-primary me-2"></i>Tips
-                                        </h6>
-                                        <ul class="list-unstyled small">
-                                            <li class="mb-2">• Use a high-quality image for better invitations</li>
-                                            <li class="mb-2">• Keep guest names simple and clear</li>
-                                            <li class="mb-2">• Test your RSVP links before sending</li>
-                                            <li>• Each guest gets a unique QR code</li>
-                                        </ul>
-                                    </div>
+                            <div class="mb-3">
+                                <label class="form-label">Guest List *</label>
+                                <textarea class="form-control" name="guests" rows="6" 
+                                          placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson"></textarea>
+                                <div class="form-text">
+                                    <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-magic me-2"></i>Generate RSVP Invitations
-                            </button>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Event Image (Optional)</label>
+                                <div class="upload-area" id="uploadArea">
+                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                                    <h6>Drop image here</h6>
+                                    <p class="text-muted small">or click to browse</p>
+                                    <input type="file" name="event_image" id="eventImage" class="d-none" 
+                                           accept=".jpg,.jpeg,.png,.gif">
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        JPG, PNG, GIF (max 8MB)
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-info-circle text-primary me-2"></i>Tips
+                                    </h6>
+                                    <ul class="list-unstyled small">
+                                        <li class="mb-2">• Use a high-quality image for better invitations</li>
+                                        <li class="mb-2">• Keep guest names simple and clear</li>
+                                        <li class="mb-2">• Test your RSVP links before sending</li>
+                                        <li>• Each guest gets a unique QR code</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic me-2"></i>Generate RSVP Invitations
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body p-4">
+                    <i class="fas fa-qrcode feature-icon"></i>
+                    <h5>QR Codes</h5>
+                    <p class="text-muted">Each guest gets a unique QR code for easy mobile access</p>
                 </div>
             </div>
         </div>
-
-        <!-- Features Section -->
-        <div class="row mt-5">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 text-center">
-                    <div class="card-body p-4">
-                        <i class="fas fa-qrcode feature-icon"></i>
-                        <h5>QR Codes</h5>
-                        <p class="text-muted">Each guest gets a unique QR code for easy mobile access</p>
-                    </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body p-4">
+                    <i class="fas fa-image feature-icon"></i>
+                    <h5>Custom Images</h5>
+                    <p class="text-muted">Upload beautiful images to make your invitations stand out</p>
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 text-center">
-                    <div class="card-body p-4">
-                        <i class="fas fa-image feature-icon"></i>
-                        <h5>Custom Images</h5>
-                        <p class="text-muted">Upload beautiful images to make your invitations stand out</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 text-center">
-                    <div class="card-body p-4">
-                        <i class="fas fa-mobile-alt feature-icon"></i>
-                        <h5>Mobile Friendly</h5>
-                        <p class="text-muted">Perfect for sharing via text, email, or social media</p>
-                    </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body p-4">
+                    <i class="fas fa-mobile-alt feature-icon"></i>
+                    <h5>Mobile Friendly</h5>
+                    <p class="text-muted">Perfect for sharing via text, email, or social media</p>
                 </div>
             </div>
         </div>
