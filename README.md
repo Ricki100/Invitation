@@ -9,6 +9,8 @@ A lightweight PHP application that generates unique RSVP invitation links and QR
 - 👤 **User Accounts** - Each user manages their own events
 - 📱 **Enhanced UI** - Modern, responsive design with drag-and-drop uploads
 - 🎨 **Event Images** - Display custom images in RSVP forms
+- 🔒 **Location Privacy** - Event address only visible to accepted guests
+- 🚫 **Duplicate Prevention** - Prevents multiple RSVPs from same guest via Google Sheets integration
 
 ## Features
 
@@ -21,6 +23,8 @@ A lightweight PHP application that generates unique RSVP invitation links and QR
 - ✅ **Google OAuth**: Secure login with Google accounts
 - ✅ **Image Upload**: Add custom images to invitations
 - ✅ **User Dashboard**: Manage all your events in one place
+- ✅ **Location Privacy**: Address only shown to accepted guests
+- ✅ **Duplicate Prevention**: Google Sheets integration prevents multiple RSVPs
 
 ## How It Works
 
@@ -58,7 +62,13 @@ A lightweight PHP application that generates unique RSVP invitation links and QR
 3. Share the sheet (make it editable by anyone with the link)
 4. Copy the sheet URL
 
-### 4. Install the Application
+### 4. Set Up Google Apps Script (Required for New Features)
+
+1. Follow the instructions in `GOOGLE_APPS_SCRIPT_SETUP.md`
+2. This enables duplicate prevention and location privacy features
+3. Deploy the Apps Script and update the webapp URL in `rsvp.php`
+
+### 5. Install the Application
 
 1. Upload all PHP files to your web server
 2. Ensure PHP is installed and configured
@@ -136,10 +146,12 @@ To connect with Google Forms:
 
 ## Example Google Sheet Structure
 
-| Guest Name | Response | Email | Notes | Date Submitted |
-|------------|----------|-------|-------|----------------|
-| John Smith | Yes      | john@email.com | Vegetarian | 2024-01-15 |
-| Jane Doe   | No       | jane@email.com | Out of town | 2024-01-15 |
+| Guest Name | Response | Phone | Timestamp |
+|------------|---------|-------|-----------|
+| John Smith | Accepted | 123-456-7890 | 2024-01-15 14:30:00 |
+| Jane Doe   | Declined | 098-765-4321 | 2024-01-15 15:45:00 |
+
+**Note**: The system now prevents duplicate RSVPs by checking Google Sheets before allowing new submissions.
 
 ## Security Features
 
@@ -148,6 +160,8 @@ To connect with Google Forms:
 - **File Validation**: Image upload security
 - **Input Sanitization**: XSS protection
 - **CSRF Protection**: Form security
+- **Location Privacy**: Event address only visible to accepted guests
+- **Duplicate Prevention**: Prevents multiple RSVPs from same guest
 
 ## Troubleshooting
 
