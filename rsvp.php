@@ -31,6 +31,48 @@ if (!in_array($guest_name, $event['guests'])) {
     exit;
 }
 
+// Function to check if guest has already RSVP'd in Google Sheets
+function checkExistingRSVP($guest_name, $sheet_link) {
+    if (empty($sheet_link)) {
+        return false; // No sheet link, allow RSVP
+    }
+    
+    // Extract sheet ID from the link
+    preg_match('/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/', $sheet_link, $matches);
+    if (empty($matches[1])) {
+        return false;
+    }
+    
+    $sheet_id = $matches[1];
+    
+    // Use Google Sheets API to check for existing record
+    // For now, we'll use a simple approach with Apps Script
+    $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
+    $post_data = [
+        'action' => 'check_existing',
+        'name' => $guest_name,
+        'sheet_id' => $sheet_id
+    ];
+    
+    $options = [
+        'http' => [
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
+            'content' => http_build_query($post_data),
+            'timeout' => 10
+        ]
+    ];
+    
+    $context = stream_context_create($options);
+    $result = file_get_contents($webapp_url, false, $context);
+    
+    // If the result contains "EXISTS", the guest has already RSVP'd
+    return strpos($result, 'EXISTS') !== false;
+}
+
+// Check if guest has already RSVP'd
+$existing_rsvp = checkExistingRSVP($guest_name, $event['sheet_link'] ?? '');
+
 // Check if Google Form link is provided and redirect if so
 if (!empty($event['form_link'])) {
     // Generate prefilled Google Form link
@@ -58,42 +100,62 @@ $rsvps_file = 'data/rsvps_' . $event_id . '.json';
 if (!file_exists('data')) mkdir('data', 0755, true);
 
 $submitted = false;
+$rsvp_response = '';
+
+// Load existing RSVP data
+$rsvps = file_exists($rsvps_file) ? json_decode(file_get_contents($rsvps_file), true) : [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $response = $_POST['rsvp_response'] ?? '';
-    $phone_number = $_POST['phone_number'] ?? '';
-    $timestamp = date('Y-m-d H:i:s');
-    $rsvps = file_exists($rsvps_file) ? json_decode(file_get_contents($rsvps_file), true) : [];
-    $rsvps[$guest_name] = [
-        'response' => $response,
-        'timestamp' => $timestamp
-    ];
-    file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
-    
-    // Send to Google Sheets via Apps Script Web App (without cURL)
-    $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
-    $post_data = [
-        'name' => $guest_name,
-        'rsvp' => $response,
-        'phone' => $phone_number
-    ];
-    $options = [
-        'http' => [
-            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-            'method'  => 'POST',
-            'content' => http_build_query($post_data),
-            'timeout' => 10
-        ]
-    ];
-    $context  = stream_context_create($options);
-    $result = file_get_contents($webapp_url, false, $context);
-    // Optionally, you can check $result for 'Success'
-    
-    $submitted = true;
+    // If guest has already RSVP'd in Google Sheets, show error
+    if ($existing_rsvp) {
+        $error_message = "You have already submitted an RSVP for this event. Please contact the event organizer if you need to change your response.";
+    } else {
+        $response = $_POST['rsvp_response'] ?? '';
+        $phone_number = $_POST['phone_number'] ?? '';
+        $timestamp = date('Y-m-d H:i:s');
+        
+        $rsvps[$guest_name] = [
+            'response' => $response,
+            'timestamp' => $timestamp
+        ];
+        file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
+        
+        // Send to Google Sheets via Apps Script Web App (without cURL)
+        $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
+        $post_data = [
+            'name' => $guest_name,
+            'rsvp' => $response,
+            'phone' => $phone_number
+        ];
+        $options = [
+            'http' => [
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method'  => 'POST',
+                'content' => http_build_query($post_data),
+                'timeout' => 10
+            ]
+        ];
+        $context  = stream_context_create($options);
+        $result = file_get_contents($webapp_url, false, $context);
+        // Optionally, you can check $result for 'Success'
+        
+        $submitted = true;
+        $rsvp_response = $response;
+    }
 }
 
-// Generate Google Maps link if location is provided
+// Check if guest has accepted (either from local file or Google Sheets)
+$has_accepted = false;
+if (isset($rsvps[$guest_name])) {
+    $has_accepted = ($rsvps[$guest_name]['response'] === 'Accepted');
+} elseif ($existing_rsvp) {
+    // If we can't determine from local file but exists in sheets, assume accepted for privacy
+    $has_accepted = true;
+}
+
+// Generate Google Maps link if location is provided and guest has accepted
 $maps_link = '';
-if (!empty($event['event_location'])) {
+if (!empty($event['event_location']) && $has_accepted) {
     $maps_link = 'https://maps.google.com/?q=' . urlencode($event['event_location']);
 }
 
@@ -220,6 +282,19 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
             margin-right: 10px;
             color: #667eea;
         }
+        .alert-warning {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .location-restricted {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -228,7 +303,52 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
             <div class="col-md-8 col-lg-6">
                 <div class="card">
                     <div class="card-body p-5">
-                        <?php if ($submitted): ?>
+                        <?php if (isset($error_message)): ?>
+                            <!-- Error Message -->
+                            <div class="alert alert-warning text-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Already Responded</strong><br>
+                                <?php echo htmlspecialchars($error_message); ?>
+                            </div>
+                            
+                            <!-- Show event details without location -->
+                            <div class="event-info-card">
+                                <h4 class="mb-4 text-center">
+                                    <i class="fas fa-calendar-alt me-2 text-primary"></i>Event Details
+                                </h4>
+                                
+                                <?php if (!empty($event['event_image'])): ?>
+                                    <div class="text-center mb-4">
+                                        <img src="<?php echo htmlspecialchars($event['event_image']); ?>" 
+                                             alt="Event Image" class="event-image">
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="event-meta">
+                                    <i class="fas fa-calendar"></i>
+                                    <strong>Event:</strong> <?php echo htmlspecialchars($event['event_name']); ?>
+                                </div>
+                                
+                                <div class="event-meta">
+                                    <i class="fas fa-clock"></i>
+                                    <strong>Date:</strong> <?php echo htmlspecialchars($event['event_date']); ?>
+                                </div>
+                                
+                                <div class="location-restricted">
+                                    <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                    <strong>Location:</strong> 
+                                    <span class="text-muted">Available after accepting invitation</span>
+                                </div>
+                                
+                                <?php if (!empty($event['event_description'])): ?>
+                                    <div class="event-meta">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Description:</strong> <?php echo nl2br(htmlspecialchars($event['event_description'])); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            
+                        <?php elseif ($submitted): ?>
                             <!-- Thank You Section -->
                             <div class="thank-you-section text-center">
                                 <div class="mb-4">
@@ -267,10 +387,18 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                                 </div>
                                 
                                 <?php if (!empty($event['event_location'])): ?>
-                                    <div class="event-meta">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <strong>Location:</strong> <?php echo htmlspecialchars($event['event_location']); ?>
-                                    </div>
+                                    <?php if ($rsvp_response === 'Accepted'): ?>
+                                        <div class="event-meta">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <strong>Location:</strong> <?php echo htmlspecialchars($event['event_location']); ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="location-restricted">
+                                            <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                                            <strong>Location:</strong> 
+                                            <span class="text-muted">Available after accepting invitation</span>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                                 
                                 <?php if (!empty($event['event_description'])): ?>
@@ -283,7 +411,7 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
 
                             <!-- Action Buttons -->
                             <div class="action-buttons text-center">
-                                <?php if (!empty($maps_link)): ?>
+                                <?php if (!empty($maps_link) && $rsvp_response === 'Accepted'): ?>
                                     <a href="<?php echo htmlspecialchars($maps_link); ?>" 
                                        target="_blank" class="btn btn-maps">
                                         <i class="fas fa-map-marked-alt me-2"></i>View on Google Maps
@@ -330,7 +458,9 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                                     </div>
                                     <div class="col-md-6">
                                         <?php if (!empty($event['event_location'])): ?>
-                                            <p><strong>Location:</strong><br><?php echo htmlspecialchars($event['event_location']); ?></p>
+                                            <p><strong>Location:</strong><br>
+                                                <span class="text-muted">Available after accepting invitation</span>
+                                            </p>
                                         <?php endif; ?>
                                         <p><strong>Guest:</strong><br><?php echo htmlspecialchars($guest_name); ?></p>
                                     </div>
