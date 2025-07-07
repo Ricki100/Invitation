@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($error)) {
                 // Create event data
-                $event_id = uniqid();
+                $event_id = '686c2a60b10c2';
                 $event_data = [
                     'id' => $event_id,
                     'name' => $event_name,
