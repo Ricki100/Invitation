@@ -105,43 +105,34 @@ $rsvp_response = '';
 // Load existing RSVP data
 $rsvps = file_exists($rsvps_file) ? json_decode(file_get_contents($rsvps_file), true) : [];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // If guest has already RSVP'd in Google Sheets, show error
-    if ($existing_rsvp) {
-        $error_message = "You have already submitted an RSVP for this event. Please contact the event organizer if you need to change your response.";
-    } else {
-        $response = $_POST['rsvp_response'] ?? '';
-        $phone_number = $_POST['phone_number'] ?? '';
-        $timestamp = date('Y-m-d H:i:s');
-        
-        $rsvps[$guest_name] = [
-            'response' => $response,
-            'timestamp' => $timestamp
-        ];
-        file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
-        
-        // Send to Google Sheets via Apps Script Web App (without cURL)
-        $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
-        $post_data = [
-            'name' => $guest_name,
-            'rsvp' => $response,
-            'phone' => $phone_number
-        ];
-        $options = [
-            'http' => [
-                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method'  => 'POST',
-                'content' => http_build_query($post_data),
-                'timeout' => 10
-            ]
-        ];
-        $context  = stream_context_create($options);
-        $result = file_get_contents($webapp_url, false, $context);
-        // Optionally, you can check $result for 'Success'
-        
-        $submitted = true;
-        $rsvp_response = $response;
-    }
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$existing_rsvp) {
+    $response = $_POST['rsvp_response'] ?? '';
+    $phone_number = $_POST['phone_number'] ?? '';
+    $timestamp = date('Y-m-d H:i:s');
+    $rsvps[$guest_name] = [
+        'response' => $response,
+        'timestamp' => $timestamp
+    ];
+    file_put_contents($rsvps_file, json_encode($rsvps, JSON_PRETTY_PRINT));
+    // Send to Google Sheets via Apps Script Web App (without cURL)
+    $webapp_url = 'https://script.google.com/macros/s/AKfycbxQ4g4Te1GNjFjYQogWgHRZWNK86_ky8pQhOfqiza9fv0fX8rSKjfVEiB_3Qw2tHdKMKA/exec';
+    $post_data = [
+        'name' => $guest_name,
+        'rsvp' => $response,
+        'phone' => $phone_number
+    ];
+    $options = [
+        'http' => [
+            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+            'method'  => 'POST',
+            'content' => http_build_query($post_data),
+            'timeout' => 10
+        ]
+    ];
+    $context  = stream_context_create($options);
+    $result = file_get_contents($webapp_url, false, $context);
+    $submitted = true;
+    $rsvp_response = $response;
 }
 
 // Check if guest has accepted (either from local file or Google Sheets)
@@ -470,15 +461,37 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                             <form method="POST">
                                 <div class="mb-4 text-center">
                                     <label class="form-label"><strong>Will you attend?</strong></label><br>
-                                    <button type="submit" name="rsvp_response" value="Accepted" class="btn btn-success btn-lg me-2">Accept</button>
-                                    <button type="submit" name="rsvp_response" value="Declined" class="btn btn-danger btn-lg">Decline</button>
+                                    <?php if ($existing_rsvp): ?>
+                                        <?php
+                                        // Fetch previous response from Google Sheets (if possible)
+                                        // For now, just show a generic message
+                                        ?>
+                                        <div class="alert alert-info mt-3 mb-3">
+                                            <?php
+                                            // Try to show the previous response if available in local file
+                                            $prev_response = $rsvps[$guest_name]['response'] ?? null;
+                                            if ($prev_response === 'Accepted') {
+                                                echo '<i class="fas fa-check-circle text-success me-2"></i>You have already <strong>accepted</strong> this invitation.';
+                                            } elseif ($prev_response === 'Declined') {
+                                                echo '<i class="fas fa-times-circle text-danger me-2"></i>You have already <strong>declined</strong> this invitation.';
+                                            } else {
+                                                echo 'You have already responded to this invitation.';
+                                            }
+                                            ?>
+                                        </div>
+                                        <button type="submit" class="btn btn-success btn-lg me-2" disabled>Accept</button>
+                                        <button type="submit" class="btn btn-danger btn-lg" disabled>Decline</button>
+                                    <?php else: ?>
+                                        <button type="submit" name="rsvp_response" value="Accepted" class="btn btn-success btn-lg me-2">Accept</button>
+                                        <button type="submit" name="rsvp_response" value="Declined" class="btn btn-danger btn-lg">Decline</button>
+                                    <?php endif; ?>
                                 </div>
                             </form>
                             
                             <div class="text-center mt-4">
                                 <small class="text-muted">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    <strong>Need to change your response?</strong> Just visit this link again.
+                                    <strong>Need to change your response?</strong> Please contact the event organizer.
                                 </small>
                             </div>
                         <?php endif; ?>
