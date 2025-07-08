@@ -325,7 +325,7 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                                     <strong>Date:</strong> <?php echo htmlspecialchars($event['event_date']); ?>
                                 </div>
                                 
-                                <?php if (!empty($event['event_location'])): ?>
+                                <?php if (!empty($event['event_location']) && isset($rsvp_response) && $rsvp_response === 'Accepted'): ?>
                                     <div class="event-meta">
                                         <i class="fas fa-map-marker-alt"></i>
                                         <strong>Location:</strong> <?php echo htmlspecialchars($event['event_location']); ?>
@@ -378,12 +378,12 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                                     <strong>Date:</strong> <?php echo htmlspecialchars($event['event_date']); ?>
                                 </div>
                                 
-                                                                    <?php if (!empty($event['event_location'])): ?>
-                                        <div class="event-meta">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                            <strong>Location:</strong> <?php echo htmlspecialchars($event['event_location']); ?>
-                                        </div>
-                                    <?php endif; ?>
+                                <?php if (!empty($event['event_location']) && isset($rsvp_response) && $rsvp_response === 'Accepted'): ?>
+                                    <div class="event-meta">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <strong>Location:</strong> <?php echo htmlspecialchars($event['event_location']); ?>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <?php if (!empty($event['event_description'])): ?>
                                     <div class="event-meta">
@@ -441,7 +441,7 @@ if (!empty($event['event_date']) && !empty($event['event_name'])) {
                                         <p><strong>Date:</strong><br><?php echo htmlspecialchars($event['event_date']); ?></p>
                                     </div>
                                     <div class="col-md-6">
-                                        <?php if (!empty($event['event_location'])): ?>
+                                        <?php if (!empty($event['event_location']) && isset($rsvp_response) && $rsvp_response === 'Accepted'): ?>
                                             <p><strong>Location:</strong><br><?php echo htmlspecialchars($event['event_location']); ?></p>
                                         <?php endif; ?>
                                         <p><strong>Guest:</strong><br><?php echo htmlspecialchars($guest_name); ?></p>
