@@ -270,13 +270,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </nav>
 
-    <div class="container py-5">
-        <div class="row justify-content-center mb-5">
-            <div class="col-md-6 mb-4">
+    <!-- Hero Section -->
+    <div class="hero-section text-center mb-5">
+        <h1 class="display-4 mb-3">🎉 Create Beautiful Event Invitations</h1>
+        <p class="lead mb-4">Generate unique RSVP links and QR codes for your guests in minutes</p>
+    </div>
+    <div class="container mb-5">
+        <div class="row justify-content-center">
+            <div class="col-md-5 mb-4">
                 <div class="card h-100">
                     <div class="card-body text-center p-4">
                         <i class="fas fa-bolt feature-icon"></i>
-                        <h5>Quick Start</h5>
+                        <h5>Create Event</h5>
                         <p class="text-muted">Create an event instantly without signing up</p>
                         <button class="btn btn-primary" onclick="showQuickStart()">
                             <i class="fas fa-rocket me-2"></i>Start Now
@@ -284,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mb-4">
+            <div class="col-md-5 mb-4">
                 <div class="card h-100">
                     <div class="card-body text-center p-4">
                         <i class="fas fa-user-plus feature-icon"></i>
@@ -341,8 +346,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
-        <!-- Remove old hero section and duplicate cards below -->
-
     <!-- Quick Start Form (Hidden by default) -->
     <div id="quickStartForm" style="display: none;">
         <div class="card">
