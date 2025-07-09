@@ -341,30 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <h1 class="display-4 mb-4">🎉 Create Beautiful Event Invitations</h1>
-            <p class="lead mb-4">Generate unique RSVP links and QR codes for your guests in minutes</p>
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body text-center p-4">
-                                    <i class="fas fa-bolt feature-icon"></i>
-                                    <h5>Quick Start</h5>
-                                    <p class="text-muted">Create an event instantly without signing up</p>
-                                    <button class="btn btn-primary" onclick="showQuickStart()">
-                                        <i class="fas fa-rocket me-2"></i>Start Now
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Removed Full Account/Sign In card -->
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Remove old hero section and duplicate cards below -->
 
     <!-- Quick Start Form (Hidden by default) -->
     <div id="quickStartForm" style="display: none;">
