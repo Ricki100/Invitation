@@ -70,10 +70,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($guests)) {
             $error = "Please provide at least one guest name, either by uploading a file or entering manually.";
         }
-        if (!$error) {
-            // Generate unique event ID
-            $event_id = uniqid();
-            
+        // Use Event ID from form if provided, otherwise generate one
+        $event_id = isset($_POST['event_id']) && !empty(trim($_POST['event_id'])) ? trim($_POST['event_id']) : uniqid();
+        // Check for duplicate event ID
+        $events_file = 'data/events.json';
+        if (!file_exists('data')) mkdir('data', 0755, true);
+        $events = [];
+        if (file_exists($events_file)) {
+            $events = json_decode(file_get_contents($events_file), true) ?? [];
+        }
+        if (isset($events[$event_id])) {
+            $error = "Event ID already exists. Please choose a different one.";
+        } else if (!$error) {
             // Create event data
             $event_data = [
                 'event_name' => $event_name,
@@ -84,19 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'guests' => $guests,
                 'created_at' => date('Y-m-d H:i:s')
             ];
-            
-            // Save event to file
-            $events_file = 'data/events.json';
-            if (!file_exists('data')) mkdir('data', 0755, true);
-            
-            $events = [];
-            if (file_exists($events_file)) {
-                $events = json_decode(file_get_contents($events_file), true) ?? [];
-            }
-            
             $events[$event_id] = $event_data;
             file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
-            
             // Redirect to results page with event ID
             header('Location: event_results.php?event_id=' . $event_id);
             exit;
