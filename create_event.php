@@ -191,10 +191,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="row">
                                 <div class="col-md-8">
                                     <div class="mb-3">
-                                        <label for="event_id" class="form-label">Event ID <span class="text-muted">(optional, must be unique)</span></label>
-                                        <input type="text" class="form-control" id="event_id" name="event_id" placeholder="e.g. 686c2a60b10c2">
+                                        <label for="event_id" class="form-label">Event ID <span class="text-danger">*</span> <span class="text-muted">(must be unique and is required for RSVP links to work)</span></label>
+                                        <input type="text" class="form-control" id="event_id" name="event_id" placeholder="e.g. 686c2a60b10c2" required>
                                         <div class="form-text">
-                                            <small>If you leave this blank, a unique ID will be generated for you.</small>
+                                            <small>This is the most important field. If you leave this blank, a unique ID will be generated for you. Use this ID in all RSVP links and QR codes.</small>
                                         </div>
                                     </div>
                                     <div class="mb-3">
