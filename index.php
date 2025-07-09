@@ -271,52 +271,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
 
     <div class="container py-5">
-        <!-- Add Guest to Existing Event Section -->
         <div class="row justify-content-center mb-5">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-body p-4">
-                        <h3 class="mb-3">Add Guest to Existing Event</h3>
-                        <p class="text-muted mb-3">Enter an existing Event ID and guest name(s) to generate RSVP links and QR codes for those guests.</p>
-                        <?php if (!empty($add_guest_error)): ?>
-                            <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($add_guest_error); ?></div>
-                        <?php elseif (!empty($add_guest_success)): ?>
-                            <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($add_guest_success); ?></div>
-                        <?php endif; ?>
-                        <form method="POST" autocomplete="off">
-                            <input type="hidden" name="add_guest_submit" value="1">
-                            <div class="mb-3">
-                                <label for="add_event_id" class="form-label">Event ID</label>
-                                <input type="text" class="form-control" id="add_event_id" name="add_event_id" placeholder="e.g. 686c2a60b10c2" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="add_guests" class="form-label">Guest Names</label>
-                                <textarea class="form-control" id="add_guests" name="add_guests" rows="3" placeholder="Enter guest names, one per line" required></textarea>
-                                <div class="form-text"><small>Each guest will get a unique RSVP link. Duplicates are ignored.</small></div>
-                            </div>
-                            <div class="d-grid mt-3">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-user-plus me-2"></i>Add Guest(s)
-                                </button>
-                            </div>
-                        </form>
-                        <?php if (!empty($new_guest_links)): ?>
-                            <div class="mt-4">
-                                <h5>RSVP Links & QR Codes for New Guests</h5>
-                                <div class="row">
-                                    <?php foreach ($new_guest_links as $info): ?>
-                                        <div class="col-md-6 col-lg-4 mb-4">
-                                            <div class="card h-100 text-center p-3">
-                                                <div class="mb-2 fw-bold"><?php echo htmlspecialchars($info['guest']); ?></div>
-                                                <img src="<?php echo $info['qr_code_url']; ?>" alt="QR Code" class="mb-2" style="max-width:120px;">
-                                                <input type="text" class="form-control mb-2" value="<?php echo htmlspecialchars($info['rsvp_link']); ?>" readonly onclick="this.select();">
-                                                <small class="text-muted">Click to copy link</small>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-bolt feature-icon"></i>
+                        <h5>Quick Start</h5>
+                        <p class="text-muted">Create an event instantly without signing up</p>
+                        <button class="btn btn-primary" onclick="showQuickStart()">
+                            <i class="fas fa-rocket me-2"></i>Start Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-user-plus feature-icon"></i>
+                        <h5>Add New Guest</h5>
+                        <p class="text-muted">Add a guest to an existing event and generate their RSVP link and QR code</p>
+                        <button class="btn btn-success" id="showAddGuestBtn" onclick="showAddGuestForm()">
+                            <i class="fas fa-user-plus me-2"></i>Add New Guest
+                        </button>
+                        <div id="addGuestFormContainer" style="display:none; margin-top: 2rem;">
+                            <?php if (!empty($add_guest_error)): ?>
+                                <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($add_guest_error); ?></div>
+                            <?php elseif (!empty($add_guest_success)): ?>
+                                <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($add_guest_success); ?></div>
+                            <?php endif; ?>
+                            <form method="POST" autocomplete="off">
+                                <input type="hidden" name="add_guest_submit" value="1">
+                                <div class="mb-3 text-start">
+                                    <label for="add_event_id" class="form-label">Event ID</label>
+                                    <input type="text" class="form-control" id="add_event_id" name="add_event_id" placeholder="e.g. 686c2a60b10c2" required>
                                 </div>
-                            </div>
-                        <?php endif; ?>
+                                <div class="mb-3 text-start">
+                                    <label for="add_guests" class="form-label">Guest Names</label>
+                                    <textarea class="form-control" id="add_guests" name="add_guests" rows="3" placeholder="Enter guest names, one per line" required></textarea>
+                                    <div class="form-text"><small>Each guest will get a unique RSVP link. Duplicates are ignored.</small></div>
+                                </div>
+                                <div class="d-grid mt-3">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-user-plus me-2"></i>Add Guest(s)
+                                    </button>
+                                </div>
+                            </form>
+                            <?php if (!empty($new_guest_links)): ?>
+                                <div class="mt-4">
+                                    <h5>RSVP Links & QR Codes for New Guests</h5>
+                                    <div class="row justify-content-center">
+                                        <?php foreach ($new_guest_links as $info): ?>
+                                            <div class="col-md-10 col-lg-8 mb-4">
+                                                <div class="card h-100 text-center p-4" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+                                                    <div class="fw-bold mb-2" style="font-size:1.2em; color:#764ba2;"><?php echo htmlspecialchars($info['guest']); ?></div>
+                                                    <img src="<?php echo $info['qr_code_url']; ?>" alt="QR Code" class="mb-3" style="max-width:180px; margin:auto;">
+                                                    <div class="input-group mb-2">
+                                                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($info['rsvp_link']); ?>" readonly onclick="this.select();">
+                                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($info['rsvp_link']); ?>')"><i class="fas fa-copy"></i></button>
+                                                        <a class="btn btn-success" href="<?php echo htmlspecialchars($info['rsvp_link']); ?>" target="_blank"><i class="fas fa-external-link-alt"></i> Test Link</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -480,6 +500,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function showAddGuestForm() {
+            document.getElementById('addGuestFormContainer').style.display = 'block';
+            document.getElementById('showAddGuestBtn').style.display = 'none';
+        }
         function showQuickStart() {
             document.getElementById('quickStartForm').style.display = 'block';
             document.getElementById('quickStartForm').scrollIntoView({ behavior: 'smooth' });
