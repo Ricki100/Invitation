@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event_location = $_POST['event_location'] ?? '';
     $guests_text = $_POST['guests'] ?? '';
     $event_description = $_POST['event_description'] ?? '';
+    $event_id = isset($_POST['event_id']) && !empty(trim($_POST['event_id'])) ? trim($_POST['event_id']) : uniqid();
     
     // Handle guest file upload (CSV/Excel)
     $uploaded_guests = [];
@@ -75,33 +76,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($error)) {
                 // Create event data
-                $event_id = '686c2a60b10c2';
-                $event_data = [
-                    'id' => $event_id,
-                    'name' => $event_name,
-                    'date' => $event_date,
-                    'location' => $event_location,
-                    'description' => $event_description,
-                    'image' => $event_image,
-                    'sheet_link' => $sheet_link,
-                    'form_link' => $form_link,
-                    'guests' => $guests,
-                    'created_at' => date('Y-m-d H:i:s')
-                ];
-                
-                // Save event to generic events file
+                // $event_id = '686c2a60b10c2'; // replaced by user input or uniqid above
+                // Check for duplicate event ID
                 $events_file = "data/events.json";
                 $events = [];
                 if (file_exists($events_file)) {
                     $events = json_decode(file_get_contents($events_file), true) ?? [];
                 }
-                
-                $events[$event_id] = $event_data;
-                file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
-                
-                // Redirect to results page
-                header('Location: event_results.php?event_id=' . $event_id);
-                exit;
+                if (isset($events[$event_id])) {
+                    $error = "Event ID already exists. Please choose a different one.";
+                } else {
+                    $event_data = [
+                        'id' => $event_id,
+                        'name' => $event_name,
+                        'date' => $event_date,
+                        'location' => $event_location,
+                        'description' => $event_description,
+                        'image' => $event_image,
+                        'sheet_link' => $sheet_link,
+                        'form_link' => $form_link,
+                        'guests' => $guests,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ];
+                    $events[$event_id] = $event_data;
+                    file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
+                    // Redirect to results page
+                    header('Location: event_results.php?event_id=' . $event_id);
+                    exit;
+                }
             }
         }
     }
@@ -188,6 +190,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <form action="create_event.php" method="POST" enctype="multipart/form-data">
                             <div class="row">
                                 <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="event_id" class="form-label">Event ID <span class="text-muted">(optional, must be unique)</span></label>
+                                        <input type="text" class="form-control" id="event_id" name="event_id" placeholder="e.g. 686c2a60b10c2">
+                                        <div class="form-text">
+                                            <small>If you leave this blank, a unique ID will be generated for you.</small>
+                                        </div>
+                                    </div>
                                     <div class="mb-3">
                                         <label for="sheet_link" class="form-label">Google Sheet Link *</label>
                                         <input type="url" class="form-control" id="sheet_link" name="sheet_link" 
