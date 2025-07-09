@@ -192,6 +192,9 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'ht
                             <a href="download_qr_zip.php?event_id=<?php echo urlencode($event_id); ?>" class="btn btn-info btn-lg me-3">
                                 <i class="fas fa-qrcode me-2"></i>Download QR Codes (ZIP)
                             </a>
+                            <a href="add_guests.php?event_id=<?php echo urlencode($event_id); ?>" class="btn btn-warning btn-lg me-3">
+                                <i class="fas fa-user-plus me-2"></i>Add More Guests
+                            </a>
                             <a href="index.php" class="btn btn-success btn-lg">
                                 <i class="fas fa-plus me-2"></i>Create Another Event
                             </a>
