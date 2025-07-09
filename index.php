@@ -6,6 +6,52 @@ unset($_SESSION['event_data']);
 
 $error = '';
 
+// --- Add Guest to Existing Event Logic ---
+$add_guest_error = '';
+$add_guest_success = '';
+$new_guest_links = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_guest_submit'])) {
+    $add_event_id = trim($_POST['add_event_id'] ?? '');
+    $add_guests_text = trim($_POST['add_guests'] ?? '');
+    if (empty($add_event_id) || empty($add_guests_text)) {
+        $add_guest_error = 'Please enter both the Event ID and at least one guest name.';
+    } else {
+        $events_file = 'data/events.json';
+        if (!file_exists($events_file)) {
+            $add_guest_error = 'Events file not found.';
+        } else {
+            $events = json_decode(file_get_contents($events_file), true) ?? [];
+            if (!isset($events[$add_event_id])) {
+                $add_guest_error = 'Event ID not found.';
+            } else {
+                $new_guests = array_filter(array_map('trim', explode("\n", $add_guests_text)));
+                $existing_guests = $events[$add_event_id]['guests'] ?? [];
+                $merged_guests = array_unique(array_merge($existing_guests, $new_guests));
+                $added_guests = array_diff($merged_guests, $existing_guests);
+                $added_count = count($added_guests);
+                if ($added_count === 0) {
+                    $add_guest_error = 'No new guests were added (they may already exist).';
+                } else {
+                    $events[$add_event_id]['guests'] = $merged_guests;
+                    file_put_contents($events_file, json_encode($events, JSON_PRETTY_PRINT));
+                    $add_guest_success = "Successfully added $added_count new guest(s) to the event.";
+                    // Generate RSVP links and QR codes for new guests
+                    $base_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/';
+                    foreach ($added_guests as $guest) {
+                        $rsvp_link = $base_url . 'rsvp.php?event_id=' . urlencode($add_event_id) . '&guest=' . urlencode($guest);
+                        $qr_code_url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($rsvp_link);
+                        $new_guest_links[] = [
+                            'guest' => $guest,
+                            'rsvp_link' => $rsvp_link,
+                            'qr_code_url' => $qr_code_url
+                        ];
+                    }
+                }
+            }
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $event_name = $_POST['event_name'] ?? '';
     $event_date = $_POST['event_date'] ?? '';
@@ -225,6 +271,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
 
     <div class="container py-5">
+        <!-- Add Guest to Existing Event Section -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h3 class="mb-3">Add Guest to Existing Event</h3>
+                        <p class="text-muted mb-3">Enter an existing Event ID and guest name(s) to generate RSVP links and QR codes for those guests.</p>
+                        <?php if (!empty($add_guest_error)): ?>
+                            <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($add_guest_error); ?></div>
+                        <?php elseif (!empty($add_guest_success)): ?>
+                            <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($add_guest_success); ?></div>
+                        <?php endif; ?>
+                        <form method="POST" autocomplete="off">
+                            <input type="hidden" name="add_guest_submit" value="1">
+                            <div class="mb-3">
+                                <label for="add_event_id" class="form-label">Event ID</label>
+                                <input type="text" class="form-control" id="add_event_id" name="add_event_id" placeholder="e.g. 686c2a60b10c2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="add_guests" class="form-label">Guest Names</label>
+                                <textarea class="form-control" id="add_guests" name="add_guests" rows="3" placeholder="Enter guest names, one per line" required></textarea>
+                                <div class="form-text"><small>Each guest will get a unique RSVP link. Duplicates are ignored.</small></div>
+                            </div>
+                            <div class="d-grid mt-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Add Guest(s)
+                                </button>
+                            </div>
+                        </form>
+                        <?php if (!empty($new_guest_links)): ?>
+                            <div class="mt-4">
+                                <h5>RSVP Links & QR Codes for New Guests</h5>
+                                <div class="row">
+                                    <?php foreach ($new_guest_links as $info): ?>
+                                        <div class="col-md-6 col-lg-4 mb-4">
+                                            <div class="card h-100 text-center p-3">
+                                                <div class="mb-2 fw-bold"><?php echo htmlspecialchars($info['guest']); ?></div>
+                                                <img src="<?php echo $info['qr_code_url']; ?>" alt="QR Code" class="mb-2" style="max-width:120px;">
+                                                <input type="text" class="form-control mb-2" value="<?php echo htmlspecialchars($info['rsvp_link']); ?>" readonly onclick="this.select();">
+                                                <small class="text-muted">Click to copy link</small>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Hero Section -->
         <div class="hero-section">
             <h1 class="display-4 mb-4">🎉 Create Beautiful Event Invitations</h1>
