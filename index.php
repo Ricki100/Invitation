@@ -258,6 +258,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             min-width: 320px;
             margin: 0 auto;
         }
+        .guest-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .guest-name {
+            font-size: 1.2em;
+            color: #764ba2;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .qr-code {
+            max-width: 180px;
+            height: auto;
+            margin: 0 auto 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .url-input {
+            font-size: 0.9em;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #333;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn-copy {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: white;
+            transition: background 0.3s ease;
+        }
+        .btn-copy:hover {
+            background: linear-gradient(45deg, #5a67d8, #6b46c1);
+        }
+        .btn-copy i {
+            margin-right: 8px;
+        }
+        .btn-copy.btn-success i {
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -270,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- Hero Section and Cards -->
     <div class="hero-section text-center mb-5">
         <h1 class="display-4 mb-3">🎉 Create Beautiful Event Invitations</h1>
         <p class="lead mb-4">Generate unique RSVP links and QR codes for your guests in minutes</p>
@@ -283,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <i class="fas fa-bolt feature-icon"></i>
                         <h5>Create Event</h5>
                         <p class="text-muted">Create an event instantly without signing up</p>
-                        <button class="btn btn-primary" onclick="showQuickStart()">
+                        <button class="btn btn-primary" id="showCreateEventBtn" onclick="showQuickStart()">
                             <i class="fas fa-rocket me-2"></i>Start Now
                         </button>
                     </div>
@@ -295,154 +344,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <i class="fas fa-user-plus feature-icon"></i>
                         <h5>Add New Guest</h5>
                         <p class="text-muted">Add a guest to an existing event and generate their RSVP link and QR code</p>
-                        <button class="btn btn-success" id="showAddGuestBtn" onclick="showAddGuestForm()">
+                        <button class="btn btn-success" id="showAddGuestBtn" onclick="showAddGuestSection()">
                             <i class="fas fa-user-plus me-2"></i>Add New Guest
                         </button>
-                        <div id="addGuestFormContainer" style="display:none; margin-top: 2rem;">
-                            <?php if (!empty($add_guest_error)): ?>
-                                <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($add_guest_error); ?></div>
-                            <?php elseif (!empty($add_guest_success)): ?>
-                                <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($add_guest_success); ?></div>
-                            <?php endif; ?>
-                            <form method="POST" autocomplete="off">
-                                <input type="hidden" name="add_guest_submit" value="1">
-                                <div class="mb-3 text-start">
-                                    <label for="add_event_id" class="form-label">Event ID</label>
-                                    <input type="text" class="form-control" id="add_event_id" name="add_event_id" placeholder="e.g. 686c2a60b10c2" required>
-                                </div>
-                                <div class="mb-3 text-start">
-                                    <label for="add_guests" class="form-label">Guest Names</label>
-                                    <textarea class="form-control" id="add_guests" name="add_guests" rows="3" placeholder="Enter guest names, one per line" required></textarea>
-                                    <div class="form-text"><small>Each guest will get a unique RSVP link. Duplicates are ignored.</small></div>
-                                </div>
-                                <div class="d-grid mt-3">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-user-plus me-2"></i>Add Guest(s)
-                                    </button>
-                                </div>
-                            </form>
-                            <?php if (!empty($new_guest_links)): ?>
-                                <div class="mt-4">
-                                    <h5>RSVP Links & QR Codes for New Guests</h5>
-                                    <div class="row justify-content-center">
-                                        <?php foreach ($new_guest_links as $info): ?>
-                                            <div class="col-md-10 col-lg-8 mb-4">
-                                                <div class="card h-100 text-center p-4" style="box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-                                                    <div class="fw-bold mb-2" style="font-size:1.2em; color:#764ba2;"><?php echo htmlspecialchars($info['guest']); ?></div>
-                                                    <img src="<?php echo $info['qr_code_url']; ?>" alt="QR Code" class="mb-3" style="max-width:180px; margin:auto;">
-                                                    <div class="input-group mb-2">
-                                                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($info['rsvp_link']); ?>" readonly onclick="this.select();">
-                                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('<?php echo htmlspecialchars($info['rsvp_link']); ?>')"><i class="fas fa-copy"></i></button>
-                                                        <a class="btn btn-success" href="<?php echo htmlspecialchars($info['rsvp_link']); ?>" target="_blank"><i class="fas fa-external-link-alt"></i> Test Link</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    <!-- Quick Start Form (Hidden by default) -->
-    <div id="quickStartForm" style="display: none;">
-        <div class="card">
-            <div class="card-body p-5">
-                <div class="text-center mb-4">
-                    <h2>Create Your Event</h2>
-                    <p class="text-muted">Fill in the details below to generate RSVP invitations</p>
+    </div>
+    <!-- Create Event Form Section (hidden by default) -->
+    <div id="quickStartFormSection" style="display: none;">
+        <div class="container mb-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2>Create Your Event</h2>
+                        <p class="text-muted">Fill in the details below to generate RSVP invitations</p>
+                    </div>
+                    <?php if ($error): ?>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error); ?>
+                        </div>
+                    <?php endif; ?>
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="event_id" class="form-label">Event ID <span class="text-danger">*</span> <span class="text-muted">(must be unique and is required for RSVP links to work)</span></label>
+                                    <input type="text" class="form-control" id="event_id" name="event_id" placeholder="e.g. 686c2a60b10c2" required>
+                                    <div class="form-text">
+                                        <small>This is the most important field. If you leave this blank, a unique ID will be generated for you. Use this ID in all RSVP links and QR codes.</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Event Name *</label>
+                                    <input type="text" class="form-control" name="event_name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Event Date *</label>
+                                    <input type="date" class="form-control" name="event_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Event Location</label>
+                                    <input type="text" class="form-control" name="event_location">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Event Description</label>
+                                    <textarea class="form-control" name="event_description" rows="2"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
+                                    <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
+                                    <div class="form-text">
+                                        <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Guest List *</label>
+                                    <textarea class="form-control" name="guests" rows="6" placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson"></textarea>
+                                    <div class="form-text">
+                                        <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Event Image (Optional)</label>
+                                    <div class="upload-area" id="uploadArea">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                                        <h6>Drop image here</h6>
+                                        <p class="text-muted small">or click to browse</p>
+                                        <input type="file" name="event_image" id="eventImage" class="d-none" accept=".jpg,.jpeg,.png,.gif">
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">JPG, PNG, GIF (max 8MB)</small>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-info-circle text-primary me-2"></i>Tips
+                                        </h6>
+                                        <ul class="list-unstyled small">
+                                            <li class="mb-2">• Use a high-quality image for better invitations</li>
+                                            <li class="mb-2">• Keep guest names simple and clear</li>
+                                            <li class="mb-2">• Test your RSVP links before sending</li>
+                                            <li>• Each guest gets a unique QR code</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-magic me-2"></i>Generate RSVP Invitations
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <?php if ($error): ?>
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error); ?>
+            </div>
+        </div>
+    </div>
+    <!-- Add Guest Form Section (hidden by default) -->
+    <div id="addGuestFormSection" style="display: none;">
+        <div class="container mb-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2>Add New Guest</h2>
+                        <p class="text-muted">Enter an existing Event ID and guest name(s) to generate RSVP links and QR codes for those guests.</p>
                     </div>
-                <?php endif; ?>
-                
-                <form method="POST" enctype="multipart/form-data">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="event_id" class="form-label">Event ID <span class="text-danger">*</span> <span class="text-muted">(must be unique and is required for RSVP links to work)</span></label>
-                                <input type="text" class="form-control" id="event_id" name="event_id" placeholder="e.g. 686c2a60b10c2" required>
-                                <div class="form-text">
-                                    <small>This is the most important field. If you leave this blank, a unique ID will be generated for you. Use this ID in all RSVP links and QR codes.</small>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Event Name *</label>
-                                <input type="text" class="form-control" name="event_name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Event Date *</label>
-                                <input type="date" class="form-control" name="event_date" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Event Location</label>
-                                <input type="text" class="form-control" name="event_location">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Event Description</label>
-                                <textarea class="form-control" name="event_description" rows="2"></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="guests_file" class="form-label">Upload Guest List (CSV or Excel)</label>
-                                <input type="file" class="form-control" id="guests_file" name="guests_file" accept=".csv,.xls,.xlsx">
-                                <div class="form-text">
-                                    <small>Upload a CSV or Excel file with one guest name per row. This will be merged with any names entered manually below.</small>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Guest List *</label>
-                                <textarea class="form-control" name="guests" rows="6" 
-                                          placeholder="Enter guest names (one per line):&#10;John Smith&#10;Jane Doe&#10;Mike Johnson"></textarea>
-                                <div class="form-text">
-                                    <small>Enter one guest name per line. Each guest will get a unique RSVP link.</small>
-                                </div>
+                    <?php if (!empty($add_guest_error)): ?>
+                        <div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($add_guest_error); ?></div>
+                    <?php elseif (!empty($add_guest_success)): ?>
+                        <div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><?php echo htmlspecialchars($add_guest_success); ?></div>
+                    <?php endif; ?>
+                    <form method="POST" autocomplete="off">
+                        <input type="hidden" name="add_guest_submit" value="1">
+                        <div class="mb-3 text-start">
+                            <label for="add_event_id" class="form-label">Event ID</label>
+                            <input type="text" class="form-control" id="add_event_id" name="add_event_id" placeholder="e.g. 686c2a60b10c2" required>
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="add_guests" class="form-label">Guest Names</label>
+                            <textarea class="form-control" id="add_guests" name="add_guests" rows="3" placeholder="Enter guest names, one per line" required></textarea>
+                            <div class="form-text"><small>Each guest will get a unique RSVP link. Duplicates are ignored.</small></div>
+                        </div>
+                        <div class="d-grid mt-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Add Guest(s)
+                            </button>
+                        </div>
+                    </form>
+                    <?php if (!empty($new_guest_links)): ?>
+                        <div class="mt-4">
+                            <h5>RSVP Links & QR Codes for New Guests</h5>
+                            <div class="row">
+                                <?php foreach ($new_guest_links as $info):
+                                    $guest_url = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/rsvp.php?event_id=' . urlencode($add_event_id) . '&guest=' . urlencode($info['guest']);
+                                ?>
+                                    <div class="col-md-6 col-lg-4 mb-4">
+                                        <div class="guest-card">
+                                            <div class="text-center mb-3">
+                                                <div class="guest-name"><?php echo htmlspecialchars($info['guest']); ?></div>
+                                            </div>
+                                            <div class="text-center mb-3">
+                                                <img src="<?php echo $info['qr_code_url']; ?>" class="qr-code" alt="QR Code">
+                                            </div>
+                                            <div class="mb-3">
+                                                <input type="text" class="form-control url-input" value="<?php echo htmlspecialchars($guest_url); ?>" readonly id="url-<?php echo md5($info['guest']); ?>">
+                                            </div>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-copy" onclick="copyToClipboard('url-<?php echo md5($info['guest']); ?>')">
+                                                    <i class="fas fa-copy me-2"></i>Copy Link
+                                                </button>
+                                                <a href="<?php echo htmlspecialchars($guest_url); ?>" class="btn btn-success" target="_blank">
+                                                    <i class="fas fa-external-link-alt me-2"></i>Test Link
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-                        
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Event Image (Optional)</label>
-                                <div class="upload-area" id="uploadArea">
-                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
-                                    <h6>Drop image here</h6>
-                                    <p class="text-muted small">or click to browse</p>
-                                    <input type="file" name="event_image" id="eventImage" class="d-none" 
-                                           accept=".jpg,.jpeg,.png,.gif">
-                                </div>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        JPG, PNG, GIF (max 8MB)
-                                    </small>
-                                </div>
-                            </div>
-                            
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h6 class="card-title">
-                                        <i class="fas fa-info-circle text-primary me-2"></i>Tips
-                                    </h6>
-                                    <ul class="list-unstyled small">
-                                        <li class="mb-2">• Use a high-quality image for better invitations</li>
-                                        <li class="mb-2">• Keep guest names simple and clear</li>
-                                        <li class="mb-2">• Test your RSVP links before sending</li>
-                                        <li>• Each guest gets a unique QR code</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-magic me-2"></i>Generate RSVP Invitations
-                        </button>
-                    </div>
-                </form>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
@@ -480,13 +546,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function showAddGuestForm() {
-            document.getElementById('addGuestFormContainer').style.display = 'block';
-            document.getElementById('showAddGuestBtn').style.display = 'none';
-        }
         function showQuickStart() {
-            document.getElementById('quickStartForm').style.display = 'block';
-            document.getElementById('quickStartForm').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('quickStartFormSection').style.display = 'block';
+            document.getElementById('addGuestFormSection').style.display = 'none';
+            window.scrollTo({ top: document.getElementById('quickStartFormSection').offsetTop - 40, behavior: 'smooth' });
+        }
+        function showAddGuestSection() {
+            document.getElementById('addGuestFormSection').style.display = 'block';
+            document.getElementById('quickStartFormSection').style.display = 'none';
+            window.scrollTo({ top: document.getElementById('addGuestFormSection').offsetTop - 40, behavior: 'smooth' });
         }
 
         // File upload handling
@@ -531,6 +599,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     `;
                 };
                 reader.readAsDataURL(file);
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            element.setSelectionRange(0, 99999); // For mobile devices
+            try {
+                document.execCommand('copy');
+                // Show success message
+                const button = element.parentElement.nextElementSibling;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+                button.classList.remove('btn-copy');
+                button.classList.add('btn-success');
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-copy');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
             }
         }
     </script>
