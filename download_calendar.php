@@ -14,9 +14,9 @@ if (empty($event_name) || empty($event_date)) {
 
 // Create event date/time
 $event_datetime = new DateTime($event_date);
-$event_datetime->setTime(18, 0); // Default to 6 PM
+$event_datetime->setTime(14, 30); // Set to 2:30 PM
 $end_datetime = clone $event_datetime;
-$end_datetime->add(new DateInterval('PT2H')); // 2 hours duration
+$end_datetime->add(new DateInterval('PT5H30M')); // 5.5 hours duration (until 8:00 PM)
 
 // Generate unique identifier
 $uid = uniqid() . '@event-rsvp-generator.com';
