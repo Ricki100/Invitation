@@ -13,8 +13,8 @@ if (empty($event_name) || empty($event_date)) {
 }
 
 // Create event date/time
-$event_datetime = new DateTime($event_date);
-$event_datetime->setTime(14, 30); // Set to 2:30 PM
+$event_datetime = new DateTime($event_date, new DateTimeZone('Africa/Harare'));
+$event_datetime->setTime(14, 30); // Set to 2:30 PM local time
 $end_datetime = clone $event_datetime;
 $end_datetime->add(new DateInterval('PT5H30M')); // 5.5 hours duration (until 8:00 PM)
 
@@ -29,9 +29,9 @@ $ics_content .= "CALSCALE:GREGORIAN\r\n";
 $ics_content .= "METHOD:PUBLISH\r\n";
 $ics_content .= "BEGIN:VEVENT\r\n";
 $ics_content .= "UID:" . $uid . "\r\n";
-$ics_content .= "DTSTART:" . $event_datetime->format('Ymd\THis\Z') . "\r\n";
-$ics_content .= "DTEND:" . $end_datetime->format('Ymd\THis\Z') . "\r\n";
-$ics_content .= "DTSTAMP:" . date('Ymd\THis\Z') . "\r\n";
+$ics_content .= "DTSTART:" . $event_datetime->format('Ymd\THis') . "\r\n";
+$ics_content .= "DTEND:" . $end_datetime->format('Ymd\THis') . "\r\n";
+$ics_content .= "DTSTAMP:" . date('Ymd\THis') . "\r\n";
 $ics_content .= "SUMMARY:" . escapeString($event_name) . "\r\n";
 
 if (!empty($event_location)) {
